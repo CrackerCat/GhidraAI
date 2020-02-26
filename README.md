@@ -1,6 +1,6 @@
-# PROJECTNAME
+# GhidraAI
 
-PROJECTNAME is a value-set analysis plugin for [Ghidra][ghidra]. Locate local variables on a function's stack using Ghidra's intermediate represention results on binaries without debug symbols.
+GhidraAI is a value-set analysis plugin for [Ghidra][ghidra]. Locate local variables on a function's stack using Ghidra's intermediate represention results on binaries without debug symbols.
   
 ## Value-set Analysis
 
@@ -12,7 +12,7 @@ Pointer-analysis produces an over-approximation of the value-set of addresses th
 
 ## Environment
 
-PROGRAMNAME was developed and tested on Ubuntu 18.04.3LTS and deployed on Ghidra v9.1.
+GhidraAI was developed and tested on Ubuntu 18.04.3LTS and deployed on Ghidra v9.1.
 
 ## Installation
 
