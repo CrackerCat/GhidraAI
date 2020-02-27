@@ -33,4 +33,4 @@ Run the script 'VSA_IR.java' from Ghidra's GUI.
 NOTE: By default, the program prints its results to the file "VSAoutput_<function name>.txt" to in the home directory. More information about how to customize the output directory can be found [here][readme].
 
 [ghidra]: https://github.com/NationalSecurityAgency/ghidra
-[readme]: https://github.com/ryantanwk/Ghidra-Type-Recovery-Plugin/blob/master/src/README
+[readme]: https://github.com/ryantanwk/GhidraAI/blob/master/benchmark/README
