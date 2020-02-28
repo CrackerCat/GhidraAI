@@ -114,12 +114,15 @@ public class VSA_IR extends GhidraScript {
 				}
 			}	 
 
-			JSONObject json = new JSONObject();
+			JSONObject jsonSet = new JSONObject();
 			for (Map.Entry<String,AccessedObject> entry : funcAbsDomain.entrySet()) {
+				JSONObject json = new JSONObject();
 				AccessedObject ao = entry.getValue();
-			    json.put(ao.location,ao.dataAsLoc());
+			    json.put("Addess", ao.location);
+			    json.put("Value-Set",ao.dataAsLoc());
+			    jsonSet.put(ao.location,json);
 			}
-			printWriter.write(json.toString()); // write to file
+			printWriter.write(jsonSet.toString());
 			println("Value-Set Analysis Completed.");
 			printWriter.close();
 			printPcodewriter.close();
