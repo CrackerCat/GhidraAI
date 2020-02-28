@@ -9,6 +9,7 @@
 * @version 1.0 
 */
 
+import org.json.*;
 import java.io.IOException;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -63,8 +64,10 @@ public class VSA_IR extends GhidraScript {
 		IRInterpreter interpreter = new IRInterpreter(program);
 		
 		try {
-			FileWriter writer = new FileWriter(output_dir+"VSAoutput_"+func_name, false); // writting to file
-    		PrintWriter printWriter = new PrintWriter(writer); // writting to file
+			FileWriter writer = new FileWriter(output_dir+"VSAoutput_"+func_name, false);
+    		PrintWriter printWriter = new PrintWriter(writer);
+    		FileWriter pcodewriter = new FileWriter(output_dir+"Pcodeoutput_"+func_name, false);
+    		PrintWriter printPcodewriter = new PrintWriter(pcodewriter);
 			
 		while(funcIter.hasNext() && !monitor.isCancelled()) {
 			Function func = funcIter.next();
@@ -106,18 +109,20 @@ public class VSA_IR extends GhidraScript {
 						String nullPrint = "null";
 						printable = nullPrint.concat(" = " + printable);
 					}
-					printWriter.write(printable); // write to file
-					printWriter.write("\n"); // write to file
+					printPcodewriter.write(printable);
+					printPcodewriter.write("\n");
 				}
-			}	
-			printWriter.write("\n------------------ ABSTRACT DOMAIN ------------------\n\n"); // write to file
+			}	 
 
+			JSONObject json = new JSONObject();
 			for (Map.Entry<String,AccessedObject> entry : funcAbsDomain.entrySet()) {
-				printWriter.write(entry.getValue().toString()); // write to file
-				printWriter.write("\n"); // write to file
+				AccessedObject ao = entry.getValue();
+			    json.put(ao.location,ao.dataAsLoc());
 			}
+			printWriter.write(json.toString()); // write to file
 			println("Value-Set Analysis Completed.");
 			printWriter.close();
+			printPcodewriter.close();
 		}
 		} catch (Exception e) { System.err.println("Failed"); }
 	}
@@ -135,7 +140,7 @@ public class VSA_IR extends GhidraScript {
     	if (varnode.isRegister()) {
     		returnable = funcAbsDomain.get(varnode.toString(language));
     		if (returnable == null) {
-    			returnable = new AccessedObject(1,0,0,varnode.getSize(),varnode.toString(language));
+    			returnable = new AccessedObject(1,0,0,varnode.toString(language));
     			returnable.symbolic = varnode.toString(language);
     			funcAbsDomain.put(returnable.location,returnable);
     		}
@@ -143,7 +148,7 @@ public class VSA_IR extends GhidraScript {
     	else {
     		returnable = funcAbsDomain.get(Long.toString(varnode.getOffset()));
     		if (returnable == null) { 
-    			returnable = new AccessedObject(-1,0,0,varnode.getSize(),
+    			returnable = new AccessedObject(-1,0,0,
     				Long.toString(varnode.getOffset())); 
     			funcAbsDomain.put(returnable.location,returnable);
     		}
@@ -208,7 +213,7 @@ class IRInterpreter extends Interpreter {
     	
     	if (input0.isConstant()) { // input0 is constant
     		int value = Integer.decode(input0.toString(language)); // get const value
-    		target = new AccessedObject(1,-value,-value,input0.getSize(), 
+    		target = new AccessedObject(1,-value,-value, 
     				Long.toString(input0.getOffset())); // create new AccessedObject
     	}
     	else { // input is var || reg
@@ -236,7 +241,7 @@ class IRInterpreter extends Interpreter {
     		if (input1.isConstant()) { // input1 is constant
     			int value1 = new BigInteger(input1.toString(language).substring(2),16).intValue(); // get const value
     			
-    			target = new AccessedObject(1,value0+value1,value0+value1,input0.getSize(),
+    			target = new AccessedObject(1,value0+value1,value0+value1,
     					Long.toString(input0.getOffset())); // create AccessedObject
     		}
     		else {
@@ -281,7 +286,7 @@ class IRInterpreter extends Interpreter {
     		if (input1.isConstant()) {
     			int value1 = new BigInteger(input1.toString(language).substring(2),16).intValue();
     			
-    			target = new AccessedObject(1,value0-value1,value0-value1,input0.getSize(),
+    			target = new AccessedObject(1,value0-value1,value0-value1,
     					Long.toString(input0.getOffset()));
     		}
     		else {
@@ -327,7 +332,7 @@ class IRInterpreter extends Interpreter {
     		if (input1.isConstant()) {
     			int value1 = new BigInteger(input1.toString(language).substring(2),16).intValue();
     			
-    			target = new AccessedObject(1,value0*value1,value0*value1,input0.getSize(),
+    			target = new AccessedObject(1,value0*value1,value0*value1,
     					Long.toString(input0.getOffset()));
     		}
     		else {
@@ -347,7 +352,7 @@ class IRInterpreter extends Interpreter {
     			target = calc.intMult(input0AO, value1);
     		}
     		else {
-    			target = new AccessedObject(-1,0,0,input0.getSize(),Long.toString(input0.getOffset()));
+    			target = new AccessedObject(-1,0,0,Long.toString(input0.getOffset()));
     		}
     	}
     	target = set(target,output);
@@ -371,7 +376,7 @@ class IRInterpreter extends Interpreter {
     		if (input1.isConstant()) {
     			int value1 = new BigInteger(input1.toString(language).substring(2),16).intValue();
     			
-    			target = new AccessedObject(1,value0/value1,value0/value1,input0.getSize(),
+    			target = new AccessedObject(1,value0/value1,value0/value1,
     					Long.toString(input0.getOffset()));
     		}
     		else {
@@ -391,7 +396,7 @@ class IRInterpreter extends Interpreter {
     			target = calc.intDiv(input0AO, value1);
     		}
     		else {
-    			target = new AccessedObject(-1,0,0,input0.getSize(),Long.toString(input0.getOffset()));
+    			target = new AccessedObject(-1,0,0,Long.toString(input0.getOffset()));
     		}
     	}
     	target = set(target,output);
@@ -411,7 +416,7 @@ class IRInterpreter extends Interpreter {
     	AccessedObject input1AO = get(input1), input2AO = get(input2), result;
     	
     	result = new AccessedObject(input2AO.stride,input2AO.lwrBnd,input2AO.uppBnd,
-    			input2AO.size,input1AO.dataAsLoc());
+    			input1AO.dataAsLoc());
     	
     	if (input2AO.symbolic != null) { result.symbolic = input2AO.symbolic; }
     	
@@ -457,14 +462,14 @@ class IRInterpreter extends Interpreter {
     	
     	if (input0.isConstant()) {  // input is constant 
     		int value0 = new BigInteger(input0.toString(language).substring(2),16).intValue();
-    		result = new AccessedObject(1,value0,value0,output.getSize(),"");
+    		result = new AccessedObject(1,value0,value0,"");
     	}
     	else if (input0.isRegister()) { // input is register
     		if (absEnv.containsKey(input0.toString(language))) { // input exists in absEnv
     			result = absEnv.get(input0.toString(language)).getCopy();
     		}
     		else { // input does not exist in absEnv
-    			AccessedObject tmp = new AccessedObject(1,0,0,input0.getSize(),input0.toString(language));
+    			AccessedObject tmp = new AccessedObject(1,0,0,input0.toString(language));
     			tmp.symbolic = input0.toString(language);
     			absEnv.put(tmp.location, tmp);
     			result = tmp.getCopy();
@@ -475,7 +480,7 @@ class IRInterpreter extends Interpreter {
     			result = absEnv.get(Long.toString(input0.getOffset())).getCopy();
     		}
     		else { // input does not exist in absEnv
-    			AccessedObject tmp = new AccessedObject(1,0,0,input0.getSize(),Long.toString(input0.getOffset()));
+    			AccessedObject tmp = new AccessedObject(1,0,0,Long.toString(input0.getOffset()));
     			tmp.symbolic = input0.toString(language);
     			absEnv.put(tmp.location, tmp);
     			result = tmp.getCopy();
@@ -530,7 +535,7 @@ class IRInterpreter extends Interpreter {
     	if (varnode.isRegister()) {
     		returnable = absEnv.get(varnode.toString(language));
     		if (returnable == null) {
-    			returnable = new AccessedObject(1,0,0,varnode.getSize(),varnode.toString(language));
+    			returnable = new AccessedObject(1,0,0,varnode.toString(language));
     			returnable.symbolic = varnode.toString(language);
     			absEnv.put(returnable.location,returnable);
     		}
@@ -538,7 +543,7 @@ class IRInterpreter extends Interpreter {
     	else {
     		returnable = absEnv.get(Long.toString(varnode.getOffset()));
     		if (returnable == null) { 
-    			returnable = new AccessedObject(-1,0,0,varnode.getSize(),
+    			returnable = new AccessedObject(-1,0,0,
     				Long.toString(varnode.getOffset())); 
     			absEnv.put(returnable.location,returnable);
     		}
@@ -558,14 +563,14 @@ class IRInterpreter extends Interpreter {
     	AccessedObject returnable = absEnv.get(ID);
     	
     	if (returnable == null) {
-    		returnable = new AccessedObject(-1,0,0,0,ID);
+    		returnable = new AccessedObject(-1,0,0,ID);
     	}
     	return returnable;
     }
 }
 
 class AccessedObject {
-public int stride, lwrBnd, uppBnd, size;
+public int stride, lwrBnd, uppBnd;
 public String symbolic = null;
 public String location; // strided interval || symbolic || symbolic + strided interval
 
@@ -575,15 +580,13 @@ public String location; // strided interval || symbolic || symbolic + strided in
 	 * @param stride Integer stride value
 	 * @param lwrBnd Integer lower bound value for interval
 	 * @param uppBnd Integer upper bound value for interval
-	 * @param size Integer size of the varnode being represented
 	 * @param location String location of varnode which can be a constant value or a symbolic value + constant
 	 * @return AccessedObject representing a variable with the same attributes.
 	 */
-	public AccessedObject(int stride, int lwrBnd, int uppBnd, int size, String location) {
+	public AccessedObject(int stride, int lwrBnd, int uppBnd, String location) {
 		this.stride = stride;
 		this.lwrBnd = lwrBnd;
 		this.uppBnd = uppBnd;
-		this.size = size;
 		this.location = location;
 	}
 	
@@ -596,22 +599,18 @@ public String location; // strided interval || symbolic || symbolic + strided in
 		String printable;
 		if (stride == -1) {
 			if (symbolic == null) {
-				printable = String.format("Location:" + location + " Size:" + 
-						Integer.toString(size) + " Interval:Unknown");
+				printable = String.format("Location:" + location + " Interval:Unknown");
 			}
 			else {
-				printable = String.format("Location:" + location + " Size:" + 
-						Integer.toString(size) + " Interval:" + symbolic + " + Unknown");
+				printable = String.format("Location:" + location + " Interval:" + symbolic + " + Unknown");
 			}
 		}
 		else if (symbolic != null) {
-			printable = String.format("Location:" + location + " Size:" + 
-					Integer.toString(size) + " Interval:" + symbolic + "+" + Integer.toString(stride) + 
+			printable = String.format("Location:" + location + " Interval:" + symbolic + "+" + Integer.toString(stride) + 
 					"[" + Integer.toString(lwrBnd) + "," + Integer.toString(uppBnd) + "]");
 		}
 		else {
-			printable = String.format("Location:" + location + " Size:" + 
-				Integer.toString(size) + " Interval:" + Integer.toString(stride) + 
+			printable = String.format("Location:" + location + " Interval:" + Integer.toString(stride) + 
 				"[" + Integer.toString(lwrBnd) + "," + Integer.toString(uppBnd) + "]");
 		} 
 		return printable;
@@ -664,7 +663,7 @@ public String location; // strided interval || symbolic || symbolic + strided in
 	 * @return AccessedObject which is an exact duplicate of the current AccessedObject
 	 */
 	public AccessedObject getCopy() {
-		AccessedObject tmp = new AccessedObject(stride,lwrBnd,uppBnd,size,location);
+		AccessedObject tmp = new AccessedObject(stride,lwrBnd,uppBnd,location);
 		tmp.symbolic = symbolic;
 		return tmp;
 	}
