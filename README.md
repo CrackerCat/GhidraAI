@@ -24,9 +24,11 @@ Create a symbolic link to 'src' named 'ghidra_scripts' in the home directory usi
 
 > sudo ln -s <path to 'src'> <path to home directory>/ghidra_scripts
 
+From Ghidra GUI, go to Edit-->Plugin Path and select the .jar file in this repository's 'lib' directory
+
 ## Usage on Ubuntu 18.04.3LTS
 
-Launch Ghidra.
+Launch Ghidra on a binary.
 
 Run the script 'VSA_IR.java' from Ghidra's GUI.
 
