@@ -64,17 +64,17 @@ public class VSA_IR extends GhidraScript {
 		IRInterpreter interpreter = new IRInterpreter(program);
 		
 		try {
-			FileWriter writer = new FileWriter(output_dir+"VSAoutput_"+func_name, false);
+			FileWriter writer = new FileWriter(output_dir+"VSAoutput_"+func_name, true);
     		PrintWriter printWriter = new PrintWriter(writer);
-    		FileWriter pcodewriter = new FileWriter(output_dir+"Pcodeoutput_"+func_name, false);
+    		FileWriter pcodewriter = new FileWriter(output_dir+"Pcodeoutput_"+func_name, true);
     		PrintWriter printPcodewriter = new PrintWriter(pcodewriter);
 			
 		while(funcIter.hasNext() && !monitor.isCancelled()) {
+			JSONObject funcJson = new JSONObject();
 			Function func = funcIter.next();
 			String funcName = func.getName();
-			if (!funcName.equals(func_name)) {continue;} // function selection
 
-			printf("Function name: %s entry: %s\n", func.getName(), func.getEntryPoint());
+			printf("Function name: %s entry: %s\n", funcName, func.getEntryPoint());
 			
 			AddressSetView addrSV = func.getBody();
 			InstructionIterator iiter = listing.getInstructions(addrSV,true);
@@ -109,26 +109,24 @@ public class VSA_IR extends GhidraScript {
 						String nullPrint = "null";
 						printable = nullPrint.concat(" = " + printable);
 					}
-					printPcodewriter.write(printable);
-					printPcodewriter.write("\n");
+					printPcodewriter.write("Function: " + funcName + "\n");
+					printPcodewriter.write(printable + "\n");
 				}
 			}	 
 
-			JSONObject jsonSet = new JSONObject();
 			for (Map.Entry<String,AccessedObject> entry : funcAbsDomain.entrySet()) {
 				JSONObject json = new JSONObject();
 				AccessedObject ao = entry.getValue();
 			    json.put("Addess", ao.location);
 			    json.put("Value-Set",ao.dataAsLoc());
-			    jsonSet.put(ao.location,json);
+			    funcJson.put(funcName,json);
 			}
-			printWriter.write(jsonSet.toString());	
-			
-			println("Value-Set Analysis Completed.");
-			printWriter.close();
-			printPcodewriter.close();
+			printWriter.write(funcJson.toString());
 		}
+		printWriter.close();
+		printPcodewriter.close();
 		} catch (Exception e) { System.err.println("Failed"); }
+		println("Value-Set Analysis Completed.");
 	}
 	
 	/**
