@@ -122,7 +122,8 @@ public class VSA_IR extends GhidraScript {
 			    json.put("Value-Set",ao.dataAsLoc());
 			    jsonSet.put(ao.location,json);
 			}
-			printWriter.write(jsonSet.toString());
+			printWriter.write(jsonSet.toString());	
+			
 			println("Value-Set Analysis Completed.");
 			printWriter.close();
 			printPcodewriter.close();
