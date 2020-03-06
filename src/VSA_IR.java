@@ -41,8 +41,8 @@ import ghidra.util.task.TaskMonitor; // TaskMonitor
 import ghidra.app.script.GhidraScript;
 
 public class VSA_IR extends GhidraScript {
-    private String func_name = "main";
-    private String output_dir = "/home/";
+    private String func_name = "generateMTFValues";
+    private String output_dir = "/home/ryan/Documents/";
 	private Program program;
 	private Listing listing;
 	private Language language;
