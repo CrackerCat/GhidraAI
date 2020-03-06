@@ -124,9 +124,9 @@ public class VSA_IR extends GhidraScript {
 			for (Map.Entry<String,AccessedObject> entry : funcAbsDomain.entrySet()) {
 				JSONObject json = new JSONObject();
 				AccessedObject ao = entry.getValue();
-			    json.put("Addess", ao.location);
+			    json.put("Addess", ao.address);
 			    json.put("Value-Set",ao.dataAsLoc());
-			    funcJson.put(ao.location,json);
+			    funcJson.put(ao.address,json);
 			}
 			printWriter.write(funcJson.toString());
 		}
@@ -151,7 +151,7 @@ public class VSA_IR extends GhidraScript {
     		if (returnable == null) {
     			returnable = new AccessedObject(1,0,0,varnode.toString(language));
     			returnable.symbolic = varnode.toString(language);
-    			funcAbsDomain.put(returnable.location,returnable);
+    			funcAbsDomain.put(returnable.address,returnable);
     		}
     	}
     	else {
@@ -159,7 +159,7 @@ public class VSA_IR extends GhidraScript {
     		if (returnable == null) { 
     			returnable = new AccessedObject(-1,0,0,
     				Long.toString(varnode.getOffset())); 
-    			funcAbsDomain.put(returnable.location,returnable);
+    			funcAbsDomain.put(returnable.address,returnable);
     		}
     	}
     	
@@ -233,7 +233,7 @@ class IRInterpreter extends Interpreter {
     		target = calc.intMult(tmp, -1); // negate tmp stored value and set to target
     	}
     	target = set(target,output); // set output's location to target
-    	absEnv.put(target.location,target); // put target into the table, overriding exisiting entry with same key if it exists
+    	absEnv.put(target.address,target); // put target into the table, overriding exisiting entry with same key if it exists
     }
 	/**
 	 * Adds the strided interval of the varnode inputs for an INT_ADD instruction
@@ -277,7 +277,7 @@ class IRInterpreter extends Interpreter {
     		}
     	}
     	target = set(target,output);
-    	absEnv.put(target.location,target);
+    	absEnv.put(target.address,target);
     }
     
 	/**
@@ -323,7 +323,7 @@ class IRInterpreter extends Interpreter {
     		}
     	}
     	target = set(target,output);
-    	absEnv.put(target.location,target);
+    	absEnv.put(target.address,target);
     }
     
 	/**
@@ -367,7 +367,7 @@ class IRInterpreter extends Interpreter {
     		}
     	}
     	target = set(target,output);
-    	absEnv.put(target.location,target);
+    	absEnv.put(target.address,target);
     }
     
 	/**
@@ -411,7 +411,7 @@ class IRInterpreter extends Interpreter {
     		}
     	}
     	target = set(target,output);
-    	absEnv.put(target.location,target);
+    	absEnv.put(target.address,target);
     }
     
     /**
@@ -455,8 +455,8 @@ class IRInterpreter extends Interpreter {
     	
     	result = src.getCopy();
     	AccessedObject outputAO = get(output);
-    	result.location = outputAO.location;
-    	absEnv.put(result.location,result);
+    	result.address = outputAO.address;
+    	absEnv.put(result.address,result);
     }
     
 	/**
@@ -482,7 +482,7 @@ class IRInterpreter extends Interpreter {
     		else { // input does not exist in absEnv
     			AccessedObject tmp = new AccessedObject(1,0,0,input0.toString(language));
     			tmp.symbolic = input0.toString(language);
-    			absEnv.put(tmp.location, tmp);
+    			absEnv.put(tmp.address, tmp);
     			result = tmp.getCopy();
     		}
     	}
@@ -493,16 +493,16 @@ class IRInterpreter extends Interpreter {
     		else { // input does not exist in absEnv
     			AccessedObject tmp = new AccessedObject(1,0,0,Long.toString(input0.getOffset()));
     			tmp.symbolic = input0.toString(language);
-    			absEnv.put(tmp.location, tmp);
+    			absEnv.put(tmp.address, tmp);
     			result = tmp.getCopy();
     		}
     	}
     	
     	// set location of result to output
-    	if (output.isRegister()) {result.location = output.toString(language);}
-    	else {result.location = Long.toString(output.getOffset());}
+    	if (output.isRegister()) {result.address = output.toString(language);}
+    	else {result.address = Long.toString(output.getOffset());}
     	
-    	absEnv.put(result.location,result);
+    	absEnv.put(result.address,result);
     }
     
 	/**
@@ -517,7 +517,7 @@ class IRInterpreter extends Interpreter {
     	try {
     		Varnode output = pcode.getOutput();
     		AccessedObject result = get(output);
-    		absEnv.put(result.location,result);
+    		absEnv.put(result.address,result);
     	} catch(Exception e) {}
     }
     
@@ -530,7 +530,7 @@ class IRInterpreter extends Interpreter {
      */
     private AccessedObject set(AccessedObject target, Varnode output) {
     	AccessedObject dst = get(output);
-    	target.location = dst.location;
+    	target.address = dst.address;
     	return target;
     }
     
@@ -548,7 +548,7 @@ class IRInterpreter extends Interpreter {
     		if (returnable == null) {
     			returnable = new AccessedObject(1,0,0,varnode.toString(language));
     			returnable.symbolic = varnode.toString(language);
-    			absEnv.put(returnable.location,returnable);
+    			absEnv.put(returnable.address,returnable);
     		}
     	}
     	else {
@@ -556,7 +556,7 @@ class IRInterpreter extends Interpreter {
     		if (returnable == null) { 
     			returnable = new AccessedObject(1,0,0,Long.toString(varnode.getOffset()));
     			returnable.symbolic = instSymbolic;
-    			absEnv.put(returnable.location,returnable);
+    			absEnv.put(returnable.address,returnable);
     		}
     	}
     	
@@ -601,7 +601,7 @@ public String address;
 		this.stride = stride;
 		this.lwrBnd = lwrBnd;
 		this.uppBnd = uppBnd;
-		this.address = location;
+		this.address = address;
 	}
 	
 	/**
