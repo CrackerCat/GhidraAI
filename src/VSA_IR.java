@@ -41,7 +41,7 @@ import ghidra.util.task.TaskMonitor; // TaskMonitor
 import ghidra.app.script.GhidraScript;
 
 public class VSA_IR extends GhidraScript {
-    private String func_name = "main";
+    private String func_name = "generateMTFValues";
     private String output_dir = "/home/ryan/Documents/";
 	private Program program;
 	private Listing listing;
@@ -103,7 +103,7 @@ public class VSA_IR extends GhidraScript {
 							printable = printable.concat(" (" + target.toString() + ")");
 						}
 					}
-					instSymbolic = inst.getAddress().toString() + Integer.toString(pcodeCtr);
+					instSymbolic = inst.getAddress().toString() + "x0-" + Integer.toString(pcodeCtr);
 					funcAbsDomain = interpreter.process(funcAbsDomain,currPcode,inst,instSymbolic);
 					Varnode output = currPcode.getOutput();
 					if (output != null) {
@@ -616,11 +616,11 @@ public String location; // strided interval || symbolic || symbolic + strided in
 				printable = String.format("Location:" + location + " Interval:Unknown");
 			}
 			else {
-				printable = String.format("Location:" + location + " Interval:" + symbolic + " + Unknown");
+				printable = String.format("Location:" + location + " Interval:(" + symbolic + ")+Unknown");
 			}
 		}
 		else if (symbolic != null) {
-			printable = String.format("Location:" + location + " Interval:" + symbolic + "+" + Integer.toString(stride) + 
+			printable = String.format("Location:" + location + " Interval:(" + symbolic + ")+" + Integer.toString(stride) + 
 					"[" + Integer.toString(lwrBnd) + "," + Integer.toString(uppBnd) + "]");
 		}
 		else {
