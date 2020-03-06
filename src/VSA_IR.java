@@ -47,7 +47,7 @@ public class VSA_IR extends GhidraScript {
 	private Listing listing;
 	private Language language;
 	private AddressSet codeSegRng;
-	private Hashtable<String, AccessedObject> funcAbsDomain = new Hashtable<String,AccessedObject>();
+	private Hashtable<String, AccessedObject> funcAbsDomain;
 	
 	/**
 	 * This is the first function to run.
@@ -73,18 +73,24 @@ public class VSA_IR extends GhidraScript {
 			JSONObject funcJson = new JSONObject();
 			Function func = funcIter.next();
 			String funcName = func.getName();
+			funcAbsDomain = new Hashtable<String,AccessedObject>();
+			
+			if (!funcName.equals(func_name)) {continue;} // select only 1 function
 
 			printf("Function name: %s entry: %s\n", funcName, func.getEntryPoint());
 			
 			AddressSetView addrSV = func.getBody();
 			InstructionIterator iiter = listing.getInstructions(addrSV,true);
 			String printable;
+			String instSymbolic;
 			
-			while (iiter.hasNext()) { 
+			while (iiter.hasNext()) {
 				Instruction inst = iiter.next();
 				PcodeOp[] pcodeList = inst.getPcode(); 
+				int pcodeCtr = 0;
 				
 				for (PcodeOp currPcode : pcodeList) { 
+					instSymbolic = inst.getAddress().toString()+"-"+Integer.toString(pcodeCtr);
 					printable = currPcode.getMnemonic();
 						
 					for (int i = 0 ; i < currPcode.getNumInputs() ; i ++) {
@@ -97,8 +103,8 @@ public class VSA_IR extends GhidraScript {
 							printable = printable.concat(" (" + target.toString() + ")");
 						}
 					}
-						
-					funcAbsDomain = interpreter.process(funcAbsDomain,currPcode,inst);
+					instSymbolic = inst.getAddress().toString() + Integer.toString(pcodeCtr);
+					funcAbsDomain = interpreter.process(funcAbsDomain,currPcode,inst,instSymbolic);
 					Varnode output = currPcode.getOutput();
 					if (output != null) {
 						AccessedObject targetOutput = get(output);
@@ -111,6 +117,7 @@ public class VSA_IR extends GhidraScript {
 					}
 					printPcodewriter.write("Function: " + funcName + "\n");
 					printPcodewriter.write(printable + "\n");
+					pcodeCtr++;
 				}
 			}	 
 
@@ -119,7 +126,7 @@ public class VSA_IR extends GhidraScript {
 				AccessedObject ao = entry.getValue();
 			    json.put("Addess", ao.location);
 			    json.put("Value-Set",ao.dataAsLoc());
-			    funcJson.put(funcName,json);
+			    funcJson.put(ao.location,json);
 			}
 			printWriter.write(funcJson.toString());
 		}
@@ -165,6 +172,7 @@ class IRInterpreter extends Interpreter {
 	private static Program program;
 	private static Language language;
 	Hashtable<String, AccessedObject> absEnv; // key : varnode hashcode || value : AccessedObject
+	private String instSymbolic = null;
 	
 	/**
 	 * IRInterpreter constructor.
@@ -185,8 +193,9 @@ class IRInterpreter extends Interpreter {
 	 * @param	pcode Target pcode.
 	 * @return	updated abstract environment after processing target pcode.
 	 */
-	public Hashtable<String, AccessedObject> process(Hashtable<String, AccessedObject> absEnv, PcodeOp pcode, Instruction inst) {
+	public Hashtable<String, AccessedObject> process(Hashtable<String, AccessedObject> absEnv, PcodeOp pcode, Instruction inst, String instSymbolic) {
 		this.absEnv = absEnv;
+		this.instSymbolic = instSymbolic;
 		String op = pcode.getMnemonic();
 		
 		if (op.equalsIgnoreCase("INT_NEGATE")) {_recordintneg(pcode);}
@@ -438,10 +447,10 @@ class IRInterpreter extends Interpreter {
     	AccessedObject input1AO = get(input1),result,src;
     	
     	if (input1.isRegister()) {
-    		src = get(input1.toString(language)); 
-    		if (src.lwrBnd != 0 || src.uppBnd != 0) { src = get(input1AO.dataAsLoc()); }
+    		src = get(input1.toString(language),true); 
+    		if (src.lwrBnd != 0 || src.uppBnd != 0) { src = get(input1AO.dataAsLoc(),false); }
     	}
-    	else {src = get(input1AO.dataAsLoc());}
+    	else {src = get(input1AO.dataAsLoc(),false);}
     	
     	
     	result = src.getCopy();
@@ -545,8 +554,8 @@ class IRInterpreter extends Interpreter {
     	else {
     		returnable = absEnv.get(Long.toString(varnode.getOffset()));
     		if (returnable == null) { 
-    			returnable = new AccessedObject(-1,0,0,
-    				Long.toString(varnode.getOffset())); 
+    			returnable = new AccessedObject(1,0,0,Long.toString(varnode.getOffset()));
+    			returnable.symbolic = instSymbolic;
     			absEnv.put(returnable.location,returnable);
     		}
     	}
@@ -559,13 +568,16 @@ class IRInterpreter extends Interpreter {
      * using a string the represents the varnode.
      * 
      * @param ID String representing varnode whose AccessedObject we want to retrieve.
+     * @param Boolean representing if varnode represents a register
      * @return AccessedObject representing varnode
      */
-    private AccessedObject get(String ID) {
+    private AccessedObject get(String ID, boolean isRegister) {
     	AccessedObject returnable = absEnv.get(ID);
     	
     	if (returnable == null) {
-    		returnable = new AccessedObject(-1,0,0,ID);
+    		returnable = new AccessedObject(1,0,0,ID);
+    		if (isRegister) {returnable.symbolic = ID;}
+    		else {returnable.symbolic = instSymbolic;}
     	}
     	return returnable;
     }
