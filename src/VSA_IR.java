@@ -586,7 +586,7 @@ class IRInterpreter extends Interpreter {
 class AccessedObject {
 public int stride, lwrBnd, uppBnd;
 public String symbolic = null;
-public String location; // strided interval || symbolic || symbolic + strided interval
+public String address;
 
 	/**
 	 * AccessedObject constructor
@@ -597,11 +597,11 @@ public String location; // strided interval || symbolic || symbolic + strided in
 	 * @param location String location of varnode which can be a constant value or a symbolic value + constant
 	 * @return AccessedObject representing a variable with the same attributes.
 	 */
-	public AccessedObject(int stride, int lwrBnd, int uppBnd, String location) {
+	public AccessedObject(int stride, int lwrBnd, int uppBnd, String address) {
 		this.stride = stride;
 		this.lwrBnd = lwrBnd;
 		this.uppBnd = uppBnd;
-		this.location = location;
+		this.address = location;
 	}
 	
 	/**
@@ -613,18 +613,18 @@ public String location; // strided interval || symbolic || symbolic + strided in
 		String printable;
 		if (stride == -1) {
 			if (symbolic == null) {
-				printable = String.format("Location:" + location + " Interval:Unknown");
+				printable = String.format("Address:" + address + " Value-set:Unknown");
 			}
 			else {
-				printable = String.format("Location:" + location + " Interval:(" + symbolic + ")+Unknown");
+				printable = String.format("Address:" + address + " Value-set:(" + symbolic + ")+Unknown");
 			}
 		}
 		else if (symbolic != null) {
-			printable = String.format("Location:" + location + " Interval:(" + symbolic + ")+" + Integer.toString(stride) + 
+			printable = String.format("Address:" + address + " Value-set:(" + symbolic + ")+" + Integer.toString(stride) + 
 					"[" + Integer.toString(lwrBnd) + "," + Integer.toString(uppBnd) + "]");
 		}
 		else {
-			printable = String.format("Location:" + location + " Interval:" + Integer.toString(stride) + 
+			printable = String.format("Address:" + address + " Value-set:" + Integer.toString(stride) + 
 				"[" + Integer.toString(lwrBnd) + "," + Integer.toString(uppBnd) + "]");
 		} 
 		return printable;
@@ -677,7 +677,7 @@ public String location; // strided interval || symbolic || symbolic + strided in
 	 * @return AccessedObject which is an exact duplicate of the current AccessedObject
 	 */
 	public AccessedObject getCopy() {
-		AccessedObject tmp = new AccessedObject(stride,lwrBnd,uppBnd,location);
+		AccessedObject tmp = new AccessedObject(stride,lwrBnd,uppBnd,address);
 		tmp.symbolic = symbolic;
 		return tmp;
 	}
