@@ -1,4 +1,4 @@
-The program outputs 2 text files to /home/ directory.
+By default, the program processes the main function and outputs 2 text files to /home/ directory.
 
 The first file is "Pcodeouput_<function_name>". This file is made up of entries of pcode in execution order along with its input & output varnodes. 
 Entries are formatted as such: "<output varnode> = <pcode> <input0 varnode> <input1 varnode> ....."
